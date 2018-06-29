@@ -58,10 +58,10 @@ class Simulator(object):
                 self.pygame = importlib.import_module('pygame')
                 self.pygame.init()
                 self.screen = self.pygame.display.set_mode(self.size)
-                self._logo = self.pygame.transform.smoothscale(self.pygame.image.load(os.path.join("images", "logo.png")), (self.road_width, self.road_width))
+                self._logo = self.pygame.transform.smoothscale(self.pygame.image.load(os.path.join("smartcab/images", "logo.png")), (self.road_width, self.road_width))
 
-                self._ew = self.pygame.transform.smoothscale(self.pygame.image.load(os.path.join("images", "east-west.png")), (self.road_width, self.road_width))
-                self._ns = self.pygame.transform.smoothscale(self.pygame.image.load(os.path.join("images", "north-south.png")), (self.road_width, self.road_width))
+                self._ew = self.pygame.transform.smoothscale(self.pygame.image.load(os.path.join("smartcab/images", "east-west.png")), (self.road_width, self.road_width))
+                self._ns = self.pygame.transform.smoothscale(self.pygame.image.load(os.path.join("smartcab/images", "north-south.png")), (self.road_width, self.road_width))
 
                 self.frame_delay = max(1, int(self.update_delay * 1000))  # delay between GUI frames in ms (min: 1)
                 self.agent_sprite_size = (32, 32)
@@ -69,9 +69,9 @@ class Simulator(object):
                 self.agent_circle_radius = 20  # radius of circle, when using simple representation
                 for agent in self.env.agent_states:
                     if agent.color == 'white':
-                        agent._sprite = self.pygame.transform.smoothscale(self.pygame.image.load(os.path.join("images", "car-{}.png".format(agent.color))), self.primary_agent_sprite_size)
+                        agent._sprite = self.pygame.transform.smoothscale(self.pygame.image.load(os.path.join("smartcab/images", "car-{}.png".format(agent.color))), self.primary_agent_sprite_size)
                     else:
-                        agent._sprite = self.pygame.transform.smoothscale(self.pygame.image.load(os.path.join("images", "car-{}.png".format(agent.color))), self.agent_sprite_size)
+                        agent._sprite = self.pygame.transform.smoothscale(self.pygame.image.load(os.path.join("smartcab/images", "car-{}.png".format(agent.color))), self.agent_sprite_size)
                     agent._sprite_size = (agent._sprite.get_width(), agent._sprite.get_height())
 
                 self.font = self.pygame.font.Font(None, 20)
@@ -319,8 +319,8 @@ class Simulator(object):
             # Center line
             self.pygame.draw.line(self.screen, self.line_color, (road[0][0] * self.env.block_size, road[0][1] * self.env.block_size), (road[1][0] * self.env.block_size, road[1][1] * self.env.block_size), 2)
         
-        for intersection, traffic_light in self.env.intersections.iteritems():
-            self.pygame.draw.circle(self.screen, self.road_color, (intersection[0] * self.env.block_size, intersection[1] * self.env.block_size), self.road_width/2)
+        for intersection, traffic_light in iter(self.env.intersections.items()):
+            self.pygame.draw.circle(self.screen, self.road_color, (intersection[0] * self.env.block_size, intersection[1] * self.env.block_size), int(self.road_width/2))
             
             if traffic_light.state: # North-South is open
                 self.screen.blit(self._ns,
@@ -335,7 +335,7 @@ class Simulator(object):
             
         # * Dynamic elements
         self.font = self.pygame.font.Font(None, 20)
-        for agent, state in self.env.agent_states.iteritems():
+        for agent, state in iter(self.env.agent_states.items()):
             # Compute precise agent location here (back from the intersection some)
             agent_offset = (2 * state['heading'][0] * self.agent_circle_radius + self.agent_circle_radius * state['heading'][1] * 0.5, \
                             2 * state['heading'][1] * self.agent_circle_radius - self.agent_circle_radius * state['heading'][0] * 0.5)
