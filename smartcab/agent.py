@@ -39,7 +39,11 @@ class LearningAgent(Agent):
         # Update epsilon using a decay function of your choice
         # Update additional class parameters as needed
         # If 'testing' is True, set epsilon and alpha to 0
-        self.epsilon -= 0.05
+        if testing:
+            self.epsilon = 0
+            self.alpha = 0
+        else:
+            self.epsilon -= 0.05
 
         return None
 
@@ -62,8 +66,9 @@ class LearningAgent(Agent):
         # constraints in order for you to learn how to adjust epsilon and alpha, and thus learn about the balance between exploration and exploitation.
         # With the hand-engineered features, this learning process gets entirely negated.
         
-        # Set 'state' as a tuple of relevant data for the agent        
-        state = (waypoint, inputs)
+        # Set 'state' as a tuple of relevant data for the agent
+        light, oncoming, left = inputs['light'], inputs['oncoming'], inputs['left']
+        state = (waypoint, light, oncoming, left)
 
         return state
 
@@ -116,18 +121,19 @@ class LearningAgent(Agent):
         # When learning, choose a random action with 'epsilon' probability
         # Otherwise, choose an action with the highest Q-value for the current state
         # Be sure that when choosing an action with highest Q-value that you randomly select between actions that "tie".
-        if not self.learning:
-            action = random.choice(self.valid_actions)
-        else:
-            if random.random() <= epsilon:
+        if self.learning:
+            if random.random() <= self.epsilon:
                 action = random.choice(self.valid_actions)
             else:
-                maxQ = get_maxQ(state)
+                maxQ = self.get_maxQ(state)
                 maxA = [k for k in self.Q[state] if self.Q[state][k] == maxQ]
                 if len(maxA) == 1:
                     action = maxA[0]
                 else:
                     action = random.choice(maxA)
+        else:
+            action = random.choice(self.valid_actions)
+        
         return action
 
 
@@ -141,6 +147,9 @@ class LearningAgent(Agent):
         ###########
         # When learning, implement the value iteration update rule
         #   Use only the learning rate 'alpha' (do not use the discount factor 'gamma')
+        if self.learning:
+            prev_Qvalue = self.Q[state][action]
+            self.Q[state][action] = self.alpha * reward + (1 - self.alpha) * prev_Qvalue
 
         return
 
