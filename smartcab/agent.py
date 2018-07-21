@@ -39,6 +39,7 @@ class LearningAgent(Agent):
         # Update epsilon using a decay function of your choice
         # Update additional class parameters as needed
         # If 'testing' is True, set epsilon and alpha to 0
+        self.epsilon -= 0.05
 
         return None
 
@@ -76,7 +77,9 @@ class LearningAgent(Agent):
         ###########
         # Calculate the maximum Q-value of all actions for a given state
 
-        maxQ = None
+        a_space = self.Q[state]
+        max_a = max(a_space.keys(), key=(lambda k: a_space[k]))
+        maxQ = self.Q[state][max_a]
 
         return maxQ 
 
@@ -90,6 +93,9 @@ class LearningAgent(Agent):
         # When learning, check if the 'state' is not in the Q-table
         # If it is not, create a new dictionary for that state
         #   Then, for each action available, set the initial Q-value to 0.0
+        if self.learning:
+            if not state in self.Q:
+                self.Q[state] = {a: 0 for a in self.valid_actions}
 
         return
 
@@ -112,6 +118,16 @@ class LearningAgent(Agent):
         # Be sure that when choosing an action with highest Q-value that you randomly select between actions that "tie".
         if not self.learning:
             action = random.choice(self.valid_actions)
+        else:
+            if random.random() <= epsilon:
+                action = random.choice(self.valid_actions)
+            else:
+                maxQ = get_maxQ(state)
+                maxA = [k for k in self.Q[state] if self.Q[state][k] == maxQ]
+                if len(maxA) == 1:
+                    action = maxA[0]
+                else:
+                    action = random.choice(maxA)
         return action
 
 
@@ -161,13 +177,13 @@ def run():
     #   learning   - set to True to force the driving agent to use Q-learning
     #    * epsilon - continuous value for the exploration factor, default is 1
     #    * alpha   - continuous value for the learning rate, default is 0.5
-    agent = env.create_agent(LearningAgent)
+    agent = env.create_agent(LearningAgent, learning=True)
     
     ##############
     # Follow the driving agent
     # Flags:
     #   enforce_deadline - set to True to enforce a deadline metric
-    env.set_primary_agent(agent, enforce_deadline=False)
+    env.set_primary_agent(agent, enforce_deadline=True)
 
     ##############
     # Create the simulation
@@ -176,14 +192,14 @@ def run():
     #   display      - set to False to disable the GUI if PyGame is enabled
     #   log_metrics  - set to True to log trial and simulation results to /logs
     #   optimized    - set to True to change the default log file name
-    sim = Simulator(env, update_delay=1.0, log_metrics=False)
+    sim = Simulator(env, update_delay=0.01, display=False, log_metrics=True)
     
     ##############
     # Run the simulator
     # Flags:
     #   tolerance  - epsilon tolerance before beginning testing, default is 0.05 
     #   n_test     - discrete number of testing trials to perform, default is 0
-    sim.run(n_test=0)
+    sim.run(n_test=10)
 
 
 if __name__ == '__main__':
